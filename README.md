@@ -8,8 +8,8 @@ Not in the same sense as Windows Virtual Desktops, because I have no idea how th
 Basically, you move between them with `ALT+(LEFT|RIGHT)`, left decrements, right increments.
 Loops back around on both sides.
 
-I'm sure WVD uses more complicated methods, but ghettowm just sets `SW_HIDE` on windows not
-in the current "desktop".
+Right now, ghettowm uses VirtualDesktopAccessor to switch between Win10 virtual desktops,
+rather than keeping track of per-desktop windows and hiding/unhiding them.
 
 Hotkeys
 =======
@@ -28,3 +28,7 @@ Plans
 
 I plan on expanding this in the future, namely to support configuration outside of recompiling the binary..
 
+Credits
+=======
+
+[Ciantic](https://github.com/Ciantic) - [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor)

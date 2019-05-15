@@ -7,88 +7,45 @@ import (
 	"github.com/chrsm/winapi/user"
 )
 
-const (
-	hotkeyDecrement = 1
-	hotkeyIncrement = 2
-	hotkeyQuit      = 3
-)
-
-var (
-	maxVirt = virtd.GetDesktopCount() - 1
-	current = virtd.GetCurrentDesktopNumber()
-)
-
 func main() {
-	log.Printf("Starting ghettowm..")
+	log.Println("Starting ghettowm..")
 
-	// <- dec, -> inc
-	user.RegisterHotkey(nil, hotkeyDecrement, user.ModAlt|user.ModNoRepeat, user.VirtKeyLeft)
-	user.RegisterHotkey(nil, hotkeyIncrement, user.ModAlt|user.ModNoRepeat, user.VirtKeyRight)
-	user.RegisterHotkey(nil, hotkeyQuit, user.ModAlt|user.ModShift|user.ModNoRepeat, 0x51)
+	gwm := &ghettoWM{
+		desktopCount:   virtd.GetDesktopCount() - 1,
+		currentDesktop: virtd.GetCurrentDesktopNumber(),
+		keybinds: &keybinds{
+			set: make(map[int]*keybind),
+		},
+	}
 
-	log.Printf("max desktop id: %d", maxVirt)
+	vm := newLuaVM(gwm)
+	defer vm.Close()
+
+	// Run user configuration through lua, because I don't feel that
+	// writing a conf language for this makes sense, and opens up more
+	// customization options in the future.
+	if err := vm.DoFile("ghetto.lua"); err != nil {
+		panic(err)
+	}
+
+	log.Println("configuration succeeded")
 
 	for {
 		msg, ok := user.GetMessage(nil, 0, 0)
-
 		if !ok {
-			log.Fatal("user.GetMessage failed")
+			log.Fatal("failed to winapi/user.GetMessage")
 		}
 
 		if msg.Message != user.WmHotkey {
 			continue
 		}
 
-		if msg.WParam == hotkeyQuit {
-			log.Printf("got hotkeyQuit")
-			break
+		if kb, ok := gwm.keybinds.set[int(msg.WParam)]; ok {
+			kb.cb(int(msg.WParam))
 		}
-
-		// WParam = the ID of the hotkey that was pressed.
-		if msg.WParam != hotkeyDecrement && msg.WParam != hotkeyIncrement {
-			continue
-		}
-
-		direction := 1
-		if msg.WParam == hotkeyDecrement {
-			direction = -1
-		}
-
-		switchTo(bound(current+direction, maxVirt))
 	}
-
-	user.UnregisterHotkey(nil, hotkeyDecrement)
-	user.UnregisterHotkey(nil, hotkeyIncrement)
-	user.UnregisterHotkey(nil, hotkeyQuit)
 }
 
 func WinMain(wproc uintptr) {
 	main()
-}
-
-func switchTo(next int) {
-	if current == next {
-		log.Printf("tried to switch to current desktop(%d)", current)
-		return
-	}
-
-	log.Printf("switching desktops: %d to %d", current, next)
-
-	virtd.GoToDesktopNumber(next)
-
-	current = next
-}
-
-func bound(i, max int) int {
-	// loop backwards
-	if i > max {
-		return 0
-	}
-
-	// loop forwards
-	if i < 0 {
-		return max
-	}
-
-	return i
 }

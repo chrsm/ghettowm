@@ -3,13 +3,17 @@ ghettowm
 
 This is a work-in-progress ghetto window manager for Windows. I miss i3.
 
-There are currently 3 "virtual desktops".
-Not in the same sense as Windows Virtual Desktops, because I have no idea how those work.
-Basically, you move between them with `ALT+(LEFT|RIGHT)`, left decrements, right increments.
-Loops back around on both sides.
+ghettowm plugs in to Windows 10's native virtual desktop support by way of
+VirtualDesktopAccessor, rather than keeping track of per-desktop windows
+and hiding/unhiding them as it did initially.
 
-Right now, ghettowm uses VirtualDesktopAccessor to switch between Win10 virtual desktops,
-rather than keeping track of per-desktop windows and hiding/unhiding them.
+The benefit with using the IVirtualDesktopManager is that in the event
+of an issue with ghettowm, your setup is still running 100% fine.
+
+This may present some issues in the future as IVirtualDesktopManager has
+almost no functionality - the useful stuff is in IVirtualDesktopManagerInternal,
+which is undocumented and likely to change. As such, ghettowm is completely
+tied to VirtualDesktopAccessor.
 
 Building
 ========
@@ -32,7 +36,8 @@ In the near future, I want to:
 Known Issues
 ============
 
-- The Windows key (L or R) don't seem to trigger registered hotkeys.
+- The Windows key (L or R) don't seem to trigger registered hotkeys. It is not
+recommended to use it until this is fixed.
 - Likely various race conditions
 
 Example Configuration

@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/chrsm/winapi/user"
+	"github.com/chrsm/ghettowm/internal/lua/util"
+	"github.com/chrsm/ghettowm/internal/lua/windows"
 
 	"github.com/BixData/gluabit32"
 	lua "github.com/yuin/gopher-lua"
@@ -13,12 +14,14 @@ func newLuaVM(gwm *ghettoWM) *lua.LState {
 		IncludeGoStackTrace: true,
 	}
 
-	state := lua.NewState(opts)
-	gluabit32.Preload(state)
+	ls := lua.NewState(opts)
 
-	state.SetGlobal("ghettowm", luar.New(state, gwm))
-	state.SetGlobal("get_key_code", luar.New(state, user.GetVirtualKeyByName))
-	state.SetGlobal("get_mod_code", luar.New(state, user.GetModKeyByName))
+	gluabit32.Preload(ls)
 
-	return state
+	windows.Preload(ls)
+	util.Preload(ls)
+
+	ls.SetGlobal("ghettowm", luar.New(ls, gwm))
+
+	return ls
 }

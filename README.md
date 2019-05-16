@@ -11,13 +11,6 @@ Loops back around on both sides.
 Right now, ghettowm uses VirtualDesktopAccessor to switch between Win10 virtual desktops,
 rather than keeping track of per-desktop windows and hiding/unhiding them.
 
-Hotkeys
-=======
-
-- `ALT+LEFT` - Move to desktop on the "left"
-- `ALT+RIGHT` - Move to desktop on the "right"
-- `ALT+SHIFT+Q` - Quit
-
 Building
 ========
 

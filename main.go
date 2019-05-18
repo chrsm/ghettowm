@@ -2,12 +2,14 @@ package main
 
 import (
 	"log"
+	"runtime"
 
 	"github.com/chrsm/ghettowm/virtd"
-	"github.com/chrsm/winapi/user"
 )
 
 func main() {
+	runtime.LockOSThread()
+
 	log.Println("Starting ghettowm..")
 
 	gwm := &ghettoWM{
@@ -18,32 +20,7 @@ func main() {
 		},
 	}
 
-	vm := newLuaVM(gwm)
-	defer vm.Close()
-
-	// Run user configuration through lua, because I don't feel that
-	// writing a conf language for this makes sense, and opens up more
-	// customization options in the future.
-	if err := vm.DoFile("ghetto.lua"); err != nil {
-		panic(err)
-	}
-
-	log.Println("configuration succeeded")
-
-	for {
-		msg, ok := user.GetMessage(nil, 0, 0)
-		if !ok {
-			log.Fatal("failed to winapi/user.GetMessage")
-		}
-
-		if msg.Message != user.WmHotkey {
-			continue
-		}
-
-		if kb, ok := gwm.keybinds.set[int(msg.WParam)]; ok {
-			kb.cb(int(msg.WParam))
-		}
-	}
+	gwm.run()
 }
 
 func WinMain(wproc uintptr) {

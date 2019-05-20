@@ -13,11 +13,17 @@ func main() {
 	log.Println("Starting ghettowm..")
 
 	gwm := &ghettoWM{
-		desktopCount:   virtd.GetDesktopCount() - 1,
+		desktopCount:   virtd.GetDesktopCount(),
 		currentDesktop: virtd.GetCurrentDesktopNumber(),
 		keybinds: &keybinds{
 			set: make(map[int]*keybind),
 		},
+		windows: make(map[int]*desktop),
+	}
+
+	for i := 0; i < gwm.desktopCount; i++ {
+		log.Printf("init-ing dn(%d)", i)
+		gwm.windows[i] = &desktop{}
 	}
 
 	gwm.run()

@@ -48,7 +48,7 @@ func GetDesktopCount() int {
 func GetWindowDesktopNumber(w winapi.HWND) int {
 	ret, _, _ := pGetWindowDesktopNumber.Call(uintptr(w))
 
-	return int(ret)
+	return int(int32(ret))
 }
 
 func IsWindowOnCurrentVirtualDesktop(w winapi.HWND) bool {

@@ -14,6 +14,7 @@ var exports = map[string]lua.LGFunction{
 	"get_active_window":     getActiveWindow,
 	"get_foreground_window": getForegroundWindow,
 	"set_foreground_window": setForegroundWindow,
+	"set_focus":             setFocus,
 }
 
 func loader(ls *lua.LState) int {
@@ -43,4 +44,12 @@ func setForegroundWindow(ls *lua.LState) int {
 	ls.Push(lua.LBool(ok))
 
 	return 1
+}
+
+func setFocus(ls *lua.LState) int {
+	hwnd := winapi.HWND(uintptr(ls.CheckInt(1)))
+
+	user.SetFocus(hwnd)
+
+	return 0
 }

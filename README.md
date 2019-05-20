@@ -44,27 +44,39 @@ Example Configuration
 =====================
 
 ```
+-- ghettowm config
 local bit32 = require('bit32')
-local modkey = bit32.bor(get_mod_code('Alt'), get_mod_code('NoRepeat'))
+local windows = require('windows')
+local ghetto_util = require('ghetto_util')
 
-ghettowm:RegisterHotkey(modkey, get_key_code('LeftArrow'), function()
+local modkey = bit32.bor(ghetto_util.get_mod('Alt'), ghetto_util.get_mod('NoRepeat'))
+
+ghettowm:RegisterHotkey(modkey, ghetto_util.get_key('LeftArrow'), function()
   ghettowm:SwitchDesktopPrev()
 end)
 
-ghettowm:RegisterHotkey(modkey, get_key_code('RightArrow'), function()
+ghettowm:RegisterHotkey(modkey, ghetto_util.get_key('RightArrow'), function()
   ghettowm:SwitchDesktopNext()
 end)
 
-ghettowm:RegisterHotkey(bit32.bor(modkey, get_mod_code('Control')), get_key_code('Q'), function()
+ghettowm:RegisterHotkey(bit32.bor(modkey, ghetto_util.get_mod('Control')), ghetto_util.get_key('Q'), function()
   ghettowm:Quit()
 end)
 
-ghettowm:RegisterHotkey(modkey, get_key_code('One'), function()
+ghettowm:RegisterHotkey(modkey, ghetto_util.get_key('One'), function()
   ghettowm:SwitchDesktop(0)
 end)
 
-ghettowm:RegisterHotkey(modkey, get_key_code('Two'), function()
+ghettowm:RegisterHotkey(modkey, ghetto_util.get_key('Two'), function()
   ghettowm:SwitchDesktop(1)
+end)
+
+ghettowm:RegisterHotkey(modkey, ghetto_util.get_key('H'), function()
+  ghettowm:NextWindow()
+end)
+
+ghettowm:RegisterHotkey(modkey, ghetto_util.get_key('L'), function()
+  ghettowm:PrevWindow()
 end)
 ```
 

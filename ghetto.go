@@ -12,6 +12,11 @@ import (
 	"github.com/chrsm/winapi/user"
 )
 
+const (
+	windowNext = 1
+	windowPrev = 2
+)
+
 type ghettoWM struct {
 	desktopCount   int
 	currentDesktop int
@@ -38,33 +43,53 @@ func (gwm *ghettoWM) RegisterHotkey(modifiers user.ModKey, vkey user.VirtualKey,
 	return user.RegisterHotkey(gwm.hwnd, gwm.keybinds.len, modifiers, vkey)
 }
 
-func (gwm *ghettoWM) NextWindow() {
-	dn := virtd.GetCurrentDesktopNumber()
-
-	desktop, ok := gwm.windows[dn]
+func (gwm *ghettoWM) switchWindow(direction int) {
+	curdeskn := virtd.GetCurrentDesktopNumber()
+	curdesk, ok := gwm.windows[curdeskn]
 	if !ok {
-		log.Printf("Tried to switch windows on a desktop that doesn't exist.")
-		return
+		log.Printf("Tried to switch windows on a desktop that doesn't exist internally (%d)", curdeskn)
 	}
 
-	// we need to find out if we're looping around or not.
-	// if .next == nil, we need to go to head.
-	cur := desktop.find(user.GetForegroundWindow())
+	cur := curdesk.find(user.GetForegroundWindow())
 	if cur == nil {
-		log.Printf("could not find active window; hwnd=%X", int(user.GetForegroundWindow()))
+		log.Printf("could not find active window(%X)", int(user.GetForegroundWindow()))
 		return
 	}
 
-	var next winapi.HWND
-	if cur.next == nil {
-		log.Printf("cur=nil, using .head(%X)", desktop.head.hwnd)
-		next = desktop.head.hwnd
-	} else {
-		next = cur.next.hwnd
+	var dst *window
+
+	switch direction {
+	case windowNext:
+		dst = cur.next
+
+		if dst == nil {
+			// we've reached the end, so we go back to the first window.
+			dst = curdesk.head
+		}
+	case windowPrev:
+		dst = cur.prev
+		if dst == nil {
+			// we've reached the beginning, so we go back to the last window.
+			dst = curdesk.tail
+		}
+	default:
+		panic("unknown direction")
 	}
 
-	log.Printf("Setting foreground window to %X", int(next))
-	user.SetForegroundWindow(next)
+	if dst == nil {
+		log.Printf("no window to switch to, unfortunately..")
+		return
+	}
+
+	user.SetForegroundWindow(dst.hwnd)
+}
+
+func (gwm *ghettoWM) NextWindow() {
+	gwm.switchWindow(windowNext)
+}
+
+func (gwm *ghettoWM) PrevWindow() {
+	gwm.switchWindow(windowPrev)
 }
 
 func (gwm *ghettoWM) SwitchDesktop(dst int) bool {

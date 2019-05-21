@@ -1,7 +1,7 @@
-package main
+package ghettowm
 
 import (
-	"github.com/chrsm/ghettowm/virtd"
+	"github.com/chrsm/ghettowm/internal/virtd"
 	"github.com/chrsm/winapi"
 	"github.com/chrsm/winapi/user"
 )

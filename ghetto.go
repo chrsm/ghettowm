@@ -1,4 +1,4 @@
-package main
+package ghettowm
 
 import (
 	"log"
@@ -6,7 +6,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/chrsm/ghettowm/virtd"
+	"github.com/chrsm/ghettowm/internal/virtd"
+
 	"github.com/chrsm/winapi"
 	"github.com/chrsm/winapi/kernel"
 	"github.com/chrsm/winapi/user"
@@ -17,9 +18,9 @@ const (
 	windowPrev = 2
 )
 
-type ghettoWM struct {
+type WindowManager struct {
 	desktopCount   int
-	currentDesktop int
+	desktopCurrent int
 
 	// per-desktop windows
 	windows map[int]*desktop
@@ -32,7 +33,24 @@ type ghettoWM struct {
 	rwnd winapi.HWND
 }
 
-func (gwm *ghettoWM) RegisterHotkey(modifiers user.ModKey, vkey user.VirtualKey, cb func(int)) bool {
+func New() *WindowManager {
+	wm := &WindowManager{
+		desktopCount:   virtd.GetDesktopCount(),
+		desktopCurrent: virtd.GetCurrentDesktopNumber(),
+		keybinds: &keybinds{
+			set: make(map[int]*keybind),
+		},
+		windows: make(map[int]*desktop),
+	}
+
+	for i := 0; i < wm.desktopCount; i++ {
+		wm.windows[i] = &desktop{}
+	}
+
+	return wm
+}
+
+func (gwm *WindowManager) RegisterHotkey(modifiers user.ModKey, vkey user.VirtualKey, cb func(int)) bool {
 	gwm.keybinds.len++
 
 	gwm.keybinds.set[gwm.keybinds.len] = &keybind{
@@ -43,7 +61,7 @@ func (gwm *ghettoWM) RegisterHotkey(modifiers user.ModKey, vkey user.VirtualKey,
 	return user.RegisterHotkey(gwm.hwnd, gwm.keybinds.len, modifiers, vkey)
 }
 
-func (gwm *ghettoWM) switchWindow(direction int) {
+func (gwm *WindowManager) switchWindow(direction int) {
 	curdeskn := virtd.GetCurrentDesktopNumber()
 	curdesk, ok := gwm.windows[curdeskn]
 	if !ok {
@@ -84,34 +102,34 @@ func (gwm *ghettoWM) switchWindow(direction int) {
 	user.SetForegroundWindow(dst.hwnd)
 }
 
-func (gwm *ghettoWM) NextWindow() {
+func (gwm *WindowManager) NextWindow() {
 	gwm.switchWindow(windowNext)
 }
 
-func (gwm *ghettoWM) PrevWindow() {
+func (gwm *WindowManager) PrevWindow() {
 	gwm.switchWindow(windowPrev)
 }
 
-func (gwm *ghettoWM) SwitchDesktop(dst int) bool {
-	if dst == gwm.currentDesktop {
+func (gwm *WindowManager) SwitchDesktop(dst int) bool {
+	if dst == gwm.desktopCurrent {
 		return false
 	}
 
 	virtd.GoToDesktopNumber(dst)
-	gwm.currentDesktop = dst
+	gwm.desktopCurrent = dst
 
 	return true
 }
 
-func (gwm *ghettoWM) SwitchDesktopPrev() bool {
-	return gwm.SwitchDesktop(bound(gwm.currentDesktop-1, gwm.desktopCount))
+func (gwm *WindowManager) SwitchDesktopPrev() bool {
+	return gwm.SwitchDesktop(bound(gwm.desktopCurrent-1, gwm.desktopCount))
 }
 
-func (gwm *ghettoWM) SwitchDesktopNext() bool {
-	return gwm.SwitchDesktop(bound(gwm.currentDesktop+1, gwm.desktopCount))
+func (gwm *WindowManager) SwitchDesktopNext() bool {
+	return gwm.SwitchDesktop(bound(gwm.desktopCurrent+1, gwm.desktopCount))
 }
 
-func (gwm *ghettoWM) Quit() {
+func (gwm *WindowManager) Quit() {
 	for k := range gwm.keybinds.set {
 		kb := gwm.keybinds.set[k]
 
@@ -122,7 +140,7 @@ func (gwm *ghettoWM) Quit() {
 	os.Exit(0)
 }
 
-func (gwm *ghettoWM) run() {
+func (gwm *WindowManager) Run() {
 	const HWND_MESSAGE = winapi.HWND(^uintptr(2))
 	cname := "ghettowm"
 
@@ -156,7 +174,7 @@ func (gwm *ghettoWM) run() {
 	gwm.shmsg = user.RegisterWindowMessage("SHELLHOOK")
 	user.RegisterShellHookWindow(gwm.hwnd)
 
-	vm := newLuaVM(gwm)
+	vm := newVM(gwm)
 	defer vm.Close()
 
 	// Run user configuration through lua, because I don't feel that
@@ -181,7 +199,7 @@ func (gwm *ghettoWM) run() {
 	}
 }
 
-func (gwm *ghettoWM) wndproc(hwnd winapi.HWND, msg uint32, wparam uintptr, lparam uintptr) uintptr {
+func (gwm *WindowManager) wndproc(hwnd winapi.HWND, msg uint32, wparam uintptr, lparam uintptr) uintptr {
 	log.Printf("hwnd(%X); msg(%X, %d); wp(%X, %d); lp(%X, %d)", hwnd, msg, msg, wparam, wparam, lparam, lparam)
 	switch msg {
 	case user.WmHotkey:
@@ -204,7 +222,7 @@ func (gwm *ghettoWM) wndproc(hwnd winapi.HWND, msg uint32, wparam uintptr, lpara
 	return 0
 }
 
-func (gwm *ghettoWM) enumproc(hwnd winapi.HWND, _ winapi.LPARAM) uintptr {
+func (gwm *WindowManager) enumproc(hwnd winapi.HWND, _ winapi.LPARAM) uintptr {
 	// check if the window is something we want to be responsible for
 
 	buf := make([]uint16, 32)

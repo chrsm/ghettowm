@@ -1,4 +1,4 @@
-package main
+package ghettowm
 
 import (
 	"github.com/chrsm/ghettowm/internal/lua/util"
@@ -9,7 +9,7 @@ import (
 	luar "layeh.com/gopher-luar"
 )
 
-func newLuaVM(gwm *ghettoWM) *lua.LState {
+func newVM(gwm *WindowManager) *lua.LState {
 	opts := lua.Options{
 		IncludeGoStackTrace: true,
 	}
@@ -17,10 +17,8 @@ func newLuaVM(gwm *ghettoWM) *lua.LState {
 	ls := lua.NewState(opts)
 
 	gluabit32.Preload(ls)
-
 	windows.Preload(ls)
 	util.Preload(ls)
-
 	ls.SetGlobal("ghettowm", luar.New(ls, gwm))
 
 	return ls

@@ -1,4 +1,4 @@
-package main
+package ghettowm
 
 type keybinds struct {
 	set map[int]*keybind

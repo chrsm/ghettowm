@@ -1,6 +1,8 @@
 ghettowm
 ========
 
+[![CircleCI](https://circleci.com/gh/chrsm/ghettowm.svg?style=svg)](https://circleci.com/gh/chrsm/ghettowm)
+
 This is a work-in-progress ghetto window manager for Windows. I miss i3.
 
 ghettowm plugs in to Windows 10's native virtual desktop support by way of
@@ -19,6 +21,8 @@ Building
 ========
 
 `GOOS=windows go build -ldflags -H=windowsgui`
+
+Alternatively, you can download one of the [releases](/chrsm/ghettowm/releases)
 
 Plans
 =====

@@ -37,7 +37,8 @@ jobs:
       - run:
           name: "publish"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} --replace devbuild ./cmd/ghettowm/ghettowm.exe
+            COMMIT_MESSAGE=""
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete devbuild ./cmd/ghettowm/ghettowm.exe
 
 workflows:
   version: 2

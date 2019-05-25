@@ -1,0 +1,52 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/chrsm/ghettowm/
+    steps:
+      - checkout
+      - run: go get -v github.com/yuin/gopher-lua layeh.com/gopher-luar github.com/BixData/gluabit32
+      - run:
+          name: "fetch win32 deps"
+          command: |
+            GOOS=windows go get -v github.com/chrsm/winapi github.com/chrsm/winapi/kernel github.com/chrsm/winapi/user
+      - run:
+          name: "build"
+          command: |
+            cd cmd/ghettowm
+            GOOS=windows go build -v -ldflags -H=windowsgui
+
+  publish:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/chrsm/ghettowm
+    steps:
+      - checkout
+      - run: go get -v github.com/yuin/gopher-lua layeh.com/gopher-luar github.com/BixData/gluabit32
+      - run: go get -v -u github.com/tcnksm/ghr
+      - run:
+          name: "fetch win32 deps"
+          command: |
+            GOOS=windows go get -v github.com/chrsm/winapi github.com/chrsm/winapi/kernel github.com/chrsm/winapi/user
+      - run:
+          name: "build"
+          command: |
+            cd cmd/ghettowm
+            GOOS=windows go build -v -ldflags -H=windowsgui
+      - run:
+          name: "publish"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} --replace devbuild ./cmd/ghettowm/ghettowm.exe
+
+workflows:
+  version: 2
+  build-publish:
+    jobs:
+      - build
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

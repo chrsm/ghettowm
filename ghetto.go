@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/chrsm/ghettowm/internal/virtd"
+	"bits.chrsm.org/x/windows/virtd"
 
 	"github.com/chrsm/winapi"
 	"github.com/chrsm/winapi/kernel"

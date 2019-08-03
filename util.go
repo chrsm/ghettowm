@@ -1,7 +1,7 @@
 package ghettowm
 
 import (
-	"github.com/chrsm/ghettowm/internal/virtd"
+	"bits.chrsm.org/x/windows/virtd"
 	"github.com/chrsm/winapi"
 	"github.com/chrsm/winapi/user"
 )

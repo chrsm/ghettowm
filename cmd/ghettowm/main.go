@@ -7,13 +7,21 @@ import (
 	"github.com/chrsm/ghettowm"
 )
 
-func main() {
+func init() {
 	runtime.LockOSThread()
+}
+
+func main() {
+	var runch = make(chan func())
 
 	log.Println("Starting ghettowm..")
 
-	gwm := ghettowm.New()
-	gwm.Run()
+	gwm := ghettowm.New(runch)
+	go gwm.Run()
+
+	for f := range runch {
+		f()
+	}
 }
 
 func WinMain(wproc uintptr) {

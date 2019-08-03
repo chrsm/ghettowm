@@ -10,7 +10,7 @@ jobs:
       - run:
           name: "fetch win32 deps"
           command: |
-            GOOS=windows go get -v github.com/chrsm/winapi github.com/chrsm/winapi/kernel github.com/chrsm/winapi/user
+            GOOS=windows go get -v github.com/chrsm/winapi github.com/chrsm/winapi/kernel github.com/chrsm/winapi/user bits.chrsm.org/x/windows/virtd
       - run:
           name: "build"
           command: |
@@ -28,7 +28,7 @@ jobs:
       - run:
           name: "fetch win32 deps"
           command: |
-            GOOS=windows go get -v github.com/chrsm/winapi github.com/chrsm/winapi/kernel github.com/chrsm/winapi/user
+            GOOS=windows go get -v github.com/chrsm/winapi github.com/chrsm/winapi/kernel github.com/chrsm/winapi/user bits.chrsm.org/x/windows/virtd
       - run:
           name: "build"
           command: |

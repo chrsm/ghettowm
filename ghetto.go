@@ -31,34 +31,33 @@ type WindowManager struct {
 	shmsg uint
 
 	rwnd winapi.HWND
+
+	runch chan func()
 }
 
-func New() *WindowManager {
+func New(runch chan func()) *WindowManager {
 	wm := &WindowManager{
 		desktopCount:   virtd.GetDesktopCount(),
 		desktopCurrent: virtd.GetCurrentDesktopNumber(),
-		keybinds: &keybinds{
-			set: make(map[int]*keybind),
-		},
-		windows: make(map[int]*desktop),
+		keybinds:       newKeybinds(),
+		windows:        make(map[int]*desktop),
 	}
 
 	for i := 0; i < wm.desktopCount; i++ {
 		wm.windows[i] = &desktop{}
 	}
 
+	winkeyState.Store(0)
+
+	wm.runch = runch
+
 	return wm
 }
 
 func (gwm *WindowManager) RegisterHotkey(modifiers user.ModKey, vkey user.VirtualKey, cb func(int)) bool {
-	gwm.keybinds.len++
+	gwm.keybinds.set(modifiers, vkey, cb)
 
-	gwm.keybinds.set[gwm.keybinds.len] = &keybind{
-		id: gwm.keybinds.len,
-		cb: cb,
-	}
-
-	return user.RegisterHotkey(gwm.hwnd, gwm.keybinds.len, modifiers, vkey)
+	return true
 }
 
 func (gwm *WindowManager) switchWindow(direction int) {
@@ -130,11 +129,11 @@ func (gwm *WindowManager) SwitchDesktopNext() bool {
 }
 
 func (gwm *WindowManager) Quit() {
-	for k := range gwm.keybinds.set {
+	/*for k := range gwm.keybinds.set {
 		kb := gwm.keybinds.set[k]
 
 		user.UnregisterHotkey(gwm.hwnd, kb.id)
-	}
+	}*/
 
 	log.Println("Quitting!")
 	os.Exit(0)
@@ -174,6 +173,9 @@ func (gwm *WindowManager) Run() {
 	gwm.shmsg = user.RegisterWindowMessage("SHELLHOOK")
 	user.RegisterShellHookWindow(gwm.hwnd)
 
+	// register global keyboard hook for WINKEY
+	user.SetWindowsHookEx(user.WindowsHookKeyboardLowLevel, gwm.keyboardHook, 0, 0)
+
 	vm := newVM(gwm)
 	defer vm.Close()
 
@@ -190,12 +192,14 @@ func (gwm *WindowManager) Run() {
 
 	msg := &user.Message{}
 	for {
-		if ok := user.GetMessage(msg, 0, 0, 0); !ok {
-			log.Fatal("/shrug")
-		}
+		log.Printf("waiting for message..")
+		ok := user.GetMessage(msg, 0, 0, 0)
 
-		user.TranslateMessage(msg)
-		user.DispatchMessage(msg)
+		if ok {
+			user.TranslateMessage(msg)
+			user.DispatchMessage(msg)
+		}
+		log.Printf("dispatched: %#v", msg)
 	}
 }
 
@@ -203,10 +207,13 @@ func (gwm *WindowManager) wndproc(hwnd winapi.HWND, msg uint32, wparam uintptr, 
 	log.Printf("hwnd(%X); msg(%X, %d); wp(%X, %d); lp(%X, %d)", hwnd, msg, msg, wparam, wparam, lparam, lparam)
 	switch msg {
 	case user.WmHotkey:
-		log.Printf("WM_HOTKEY")
+		log.Printf("WM_HOTKEY: %v", wparam)
 
-		if kb, ok := gwm.keybinds.set[int(wparam)]; ok {
-			kb.cb(int(wparam))
+		kb := gwm.keybinds.getByID(int(wparam))
+		if kb != nil {
+			gwm.runch <- func() {
+				kb.cb(int(wparam))
+			}
 		} else {
 			return user.DefWindowProc(hwnd, msg, winapi.WPARAM(wparam), winapi.LPARAM(lparam))
 		}
@@ -232,7 +239,8 @@ func (gwm *WindowManager) enumproc(hwnd winapi.HWND, _ winapi.LPARAM) uintptr {
 	_, pid := user.GetWindowThreadProcessId(hwnd)
 	cname := user.GetClassName(hwnd, buf2)
 
-	log.Printf("hwnd(%X,%d); cname(%s); desktopn(%d); title(%s); pid(%d)", hwnd, hwnd, cname, virtd.GetWindowDesktopNumber(hwnd), title, pid)
+	// log.Printf("hwnd(%X,%d); cname(%s); desktopn(%d); title(%s); pid(%d)", hwnd, hwnd, cname, virtd.GetWindowDesktopNumber(hwnd), title, pid)
+	_, _, _ = title, pid, cname
 	if usableWindow(hwnd) {
 		gwm.windows[virtd.GetWindowDesktopNumber(hwnd)].push(hwnd)
 	}

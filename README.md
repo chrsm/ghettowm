@@ -22,7 +22,7 @@ Building
 
 `GOOS=windows go build -ldflags -H=windowsgui`
 
-Alternatively, you can download one of the [releases](/chrsm/ghettowm/releases)
+Alternatively, you can download one of the [releases](https://github.com/chrsm/ghettowm/releases)
 
 Plans
 =====
@@ -34,15 +34,19 @@ In the near future, I want to:
 
 - Support pinning of windows
 - Support moving windows between desktops
-- Allow use of the WIN key
 - Support defining layouts/tiling per desktop
+
+As of `a009caa`, WINKEY as a meta key works.
+However, this breaks ALT/SHIFT or key combos with more than one other key.
+
+I plan to reimplement hotkeys asap, but frankly everything here needs a bit of
+cleanup so perhaps I will spend some time refactoring.
 
 Known Issues
 ============
 
-- The Windows key (L or R) don't seem to trigger registered hotkeys. It is not
-recommended to use it until this is fixed.
 - Likely various race conditions
+- WINKEY meta works, but now nothing else does ;)
 
 Example Configuration
 =====================

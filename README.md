@@ -1,3 +1,21 @@
+INACTIVE
+========
+
+I am no longer working on this project. I only use Windows via KVM now and do
+not have a need for this. I may revisit this project in the future but I do
+not currently have the time.
+
+For those looking for a tiling desktop manager for Windows, I recommend:
+
+- [HashTWM](https://github.com/ZaneA/HashTWM)
+- [bug.n](https://github.com/fuhsjr00/bug.n)
+- [math0ne's tiling wm](https://github.com/math0ne/windows-tiling-window-manager)
+
+HashTWM is native (written in C), while bug.n and math0ne's are both AutoHotKey.
+I don't think any of them are designed to work with virtual desktops,
+unfortunately.
+
+
 ghettowm
 ========
 
